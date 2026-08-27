@@ -1,0 +1,101 @@
+import { useMemo, useState } from "react";
+import type { Person, Relationship } from "../api/types";
+import { computeHiddenPersonIds, computePersonIdsWithChildren } from "./collapse";
+import { computeFamilyTreeLayout } from "./computeLayout";
+import { PersonCard } from "./PersonCard";
+import "./FamilyTreeView.css";
+
+interface FamilyTreeViewProps {
+  people: Person[];
+  relationships: Relationship[];
+  onSelectPerson: (personId: number) => void;
+}
+
+const PADDING = 40;
+
+export function FamilyTreeView({ people, relationships, onSelectPerson }: FamilyTreeViewProps) {
+  const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set());
+
+  const personIdsWithChildren = useMemo(() => computePersonIdsWithChildren(people), [people]);
+
+  const hiddenIds = useMemo(
+    () => computeHiddenPersonIds(collapsedIds, people, relationships),
+    [collapsedIds, people, relationships],
+  );
+
+  const visiblePeople = useMemo(() => people.filter((p) => !hiddenIds.has(p.id)), [people, hiddenIds]);
+  const visibleRelationships = useMemo(
+    () => relationships.filter((r) => !hiddenIds.has(r.person1Id) && !hiddenIds.has(r.person2Id)),
+    [relationships, hiddenIds],
+  );
+
+  const layout = useMemo(
+    () => computeFamilyTreeLayout(visiblePeople, visibleRelationships),
+    [visiblePeople, visibleRelationships],
+  );
+
+  function toggleCollapse(personId: number) {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(personId)) {
+        next.delete(personId);
+      } else {
+        next.add(personId);
+      }
+      return next;
+    });
+  }
+
+  if (people.length === 0) {
+    return <p>No family members to display yet.</p>;
+  }
+
+  const width = layout.width + PADDING * 2;
+  const height = layout.height + PADDING * 2;
+
+  return (
+    <div className="family-tree" style={{ width, height }}>
+      <svg className="family-tree__connectors" width={width} height={height}>
+        <g transform={`translate(${PADDING}, ${PADDING})`}>
+          {layout.parentChildConnectors.map((c) => {
+            const midY = (c.originY + c.targetY) / 2;
+            return (
+              <path
+                key={c.key}
+                d={`M ${c.originX} ${c.originY} L ${c.originX} ${midY} L ${c.targetX} ${midY} L ${c.targetX} ${c.targetY}`}
+                className="family-tree__parent-line"
+              />
+            );
+          })}
+          {layout.spouseConnectors.map((c) => (
+            <line
+              key={c.key}
+              x1={c.x1}
+              y1={c.y}
+              x2={c.x2}
+              y2={c.y}
+              className={
+                c.dashed ? "family-tree__spouse-line family-tree__spouse-line--dashed" : "family-tree__spouse-line"
+              }
+            />
+          ))}
+        </g>
+      </svg>
+
+      <div className="family-tree__cards" style={{ left: PADDING, top: PADDING }}>
+        {layout.positioned.map((p) => (
+          <PersonCard
+            key={p.person.id}
+            person={p.person}
+            x={p.x}
+            y={p.y}
+            onSelect={onSelectPerson}
+            hasChildren={personIdsWithChildren.has(p.person.id)}
+            isCollapsed={collapsedIds.has(p.person.id)}
+            onToggleCollapse={toggleCollapse}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,92 @@
+.family-tree {
+  position: relative;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.family-tree__connectors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.family-tree__parent-line {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 2;
+}
+
+.family-tree__spouse-line {
+  stroke: #64748b;
+  stroke-width: 2;
+}
+
+.family-tree__spouse-line--dashed {
+  stroke-dasharray: 6 4;
+}
+
+.family-tree__cards {
+  position: absolute;
+}
+
+.person-card {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  padding: 8px;
+  box-sizing: border-box;
+  text-align: center;
+  font: inherit;
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.person-card:hover,
+.person-card:focus-visible {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+}
+
+.person-card__name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.person-card__lifespan {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.person-card__collapse-toggle {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.person-card__collapse-toggle:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
