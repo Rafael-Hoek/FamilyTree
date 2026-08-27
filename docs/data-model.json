@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Data model for the family tree application. Each top-level key is a table/entity. Field 'type' values are logical types (map to .NET / DB types as appropriate).",
+  "entities": {
+    "Person": {
+      "description": "A single family member.",
+      "fields": {
+        "Id": {
+          "type": "int",
+          "primaryKey": true,
+          "optional": false,
+          "description": "Auto-incrementing primary key."
+        },
+        "FirstName": {
+          "type": "string",
+          "optional": false,
+          "description": "Given name(s)."
+        },
+        "LastName": {
+          "type": "string",
+          "optional": false,
+          "description": "Current/family surname."
+        },
+        "BirthLastName": {
+          "type": "string",
+          "optional": true,
+          "description": "Surname at birth, if different from current LastName (e.g. maiden name after marriage). Useful for tracing lineage through name changes."
+        },
+        "Gender": {
+          "type": "enum",
+          "enumValues": ["Male", "Female", "Other", "Unknown"],
+          "optional": true,
+          "description": "Used for display purposes (icons/pronouns) in the tree UI. Not used to constrain Parent1/Parent2, which are gender-neutral."
+        },
+        "BirthDate": {
+          "type": "date",
+          "optional": true,
+          "description": "Optional because exact birth dates for older ancestors are often unknown."
+        },
+        "BirthPlace": {
+          "type": "string",
+          "optional": true
+        },
+        "DateOfDeath": {
+          "type": "date",
+          "optional": true,
+          "description": "Absence does not necessarily mean the person is alive; it may simply be unrecorded."
+        },
+        "DeathPlace": {
+          "type": "string",
+          "optional": true
+        },
+        "PictureUrl": {
+          "type": "string",
+          "optional": true,
+          "description": "Single profile picture for v1 (path/URL to stored image)."
+        },
+        "Biography": {
+          "type": "text",
+          "optional": true,
+          "description": "Free-form notes about the person (occupation, life story, anecdotes, etc.)."
+        },
+        "Parent1Id": {
+          "type": "int",
+          "foreignKey": "Person.Id",
+          "optional": true,
+          "description": "Gender-neutral parent reference. No ordering/meaning implied between Parent1 and Parent2."
+        },
+        "Parent2Id": {
+          "type": "int",
+          "foreignKey": "Person.Id",
+          "optional": true,
+          "description": "Gender-neutral parent reference."
+        },
+        "CreatedByUserId": {
+          "type": "int",
+          "foreignKey": "User.Id",
+          "optional": true,
+          "description": "Which family member/account added this record."
+        },
+        "CreatedAt": {
+          "type": "datetime",
+          "optional": false,
+          "description": "Audit timestamp, set on insert."
+        },
+        "UpdatedAt": {
+          "type": "datetime",
+          "optional": false,
+          "description": "Audit timestamp, set on insert and every update."
+        }
+      }
+    },
+    "Relationship": {
+      "description": "Represents a partnership/marriage between two people. Modeled as its own entity (rather than a single Partner field on Person) so a person can have multiple relationships over their lifetime (e.g. divorce and remarriage), each with its own dates and status.",
+      "fields": {
+        "Id": {
+          "type": "int",
+          "primaryKey": true,
+          "optional": false
+        },
+        "Person1Id": {
+          "type": "int",
+          "foreignKey": "Person.Id",
+          "optional": false
+        },
+        "Person2Id": {
+          "type": "int",
+          "foreignKey": "Person.Id",
+          "optional": false
+        },
+        "Type": {
+          "type": "enum",
+          "enumValues": ["Married", "Partnered", "Divorced", "Widowed", "Unknown"],
+          "optional": false,
+          "description": "Current/final status of this relationship."
+        },
+        "StartDate": {
+          "type": "date",
+          "optional": true,
+          "description": "e.g. marriage date or start of partnership."
+        },
+        "EndDate": {
+          "type": "date",
+          "optional": true,
+          "description": "e.g. divorce date, or date of a partner's death."
+        },
+        "CreatedByUserId": {
+          "type": "int",
+          "foreignKey": "User.Id",
+          "optional": true
+        },
+        "CreatedAt": {
+          "type": "datetime",
+          "optional": false
+        },
+        "UpdatedAt": {
+          "type": "datetime",
+          "optional": false
+        }
+      }
+    },
+    "User": {
+      "description": "A family member account with login access, used for attribution and edit permissions. Login mechanism (password vs. OAuth) can be decided later without changing this shape.",
+      "fields": {
+        "Id": {
+          "type": "int",
+          "primaryKey": true,
+          "optional": false
+        },
+        "Email": {
+          "type": "string",
+          "optional": false,
+          "unique": true
+        },
+        "DisplayName": {
+          "type": "string",
+          "optional": false
+        },
+        "PasswordHash": {
+          "type": "string",
+          "optional": true,
+          "description": "Optional at the schema level to allow for future OAuth/passwordless login methods that wouldn't populate this field."
+        },
+        "PersonId": {
+          "type": "int",
+          "foreignKey": "Person.Id",
+          "optional": true,
+          "description": "Optional link from a User account to their own Person record in the tree."
+        },
+        "Role": {
+          "type": "enum",
+          "enumValues": ["Admin", "Editor", "Viewer"],
+          "optional": false,
+          "description": "Simple permission tier: Admin manages users, Editor can add/edit people & relationships, Viewer is read-only."
+        },
+        "CreatedAt": {
+          "type": "datetime",
+          "optional": false
+        }
+      }
+    }
+  },
+  "notes": [
+    "Children are derived by querying Person rows where Parent1Id or Parent2Id matches a given Person.Id — no separate 'Child' table is needed.",
+    "A person's partner(s) are derived by querying Relationship rows where Person1Id or Person2Id matches a given Person.Id.",
+    "Deferred for later iterations: multiple photos per person (Photo gallery entity), adoptive/step/biological distinction on parent links, partial/approximate date precision (e.g. 'circa 1920'), privacy flags for living persons."
+  ]
+}
