@@ -5,3 +5,8 @@ bin/
 obj/
 *.user
 .vs/
+
+# AI assistant tooling (local to this machine, not app code)
+.agents/
+.claude/
+skills-lock.json
