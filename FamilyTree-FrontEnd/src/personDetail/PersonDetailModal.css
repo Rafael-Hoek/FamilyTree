@@ -1,0 +1,119 @@
+.person-detail {
+  width: 520px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.person-detail__view,
+.person-detail__edit {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.person-detail h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.person-detail__picture {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 8px;
+  align-self: center;
+}
+
+.person-detail__fields {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  row-gap: 8px;
+  column-gap: 12px;
+  margin: 0;
+}
+
+.person-detail__fields dt {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.person-detail__fields dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.person-detail__relationships {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.person-detail__errors {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+}
+
+.person-detail__errors ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.person-detail__confirm-delete {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 0.85rem;
+  color: #7f1d1d;
+}
+
+.person-detail__confirm-delete p {
+  margin: 0 0 10px;
+}
+
+.person-detail__error {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.person-detail__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.person-detail__actions button {
+  font: inherit;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.person-detail__actions button[type="submit"] {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.person-detail__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.person-detail__danger {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.person-detail__danger:hover {
+  background: #fef2f2;
+}

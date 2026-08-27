@@ -1,0 +1,115 @@
+.relationships-modal {
+  width: 620px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.relationships-modal h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.relationships-modal__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.relationships-modal__empty {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.relationships-modal__row {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.relationships-modal__row-fields {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.relationships-modal__row-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.relationships-modal__row-fields label:first-child {
+  flex: 1 1 200px;
+}
+
+.relationships-modal__row-fields input,
+.relationships-modal__row-fields select {
+  font: inherit;
+  font-weight: 400;
+  padding: 7px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.relationships-modal__row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.relationships-modal__row-actions button,
+.relationships-modal__footer button {
+  font: inherit;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.relationships-modal__row-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.relationships-modal__danger {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.relationships-modal__danger:hover {
+  background: #fef2f2;
+}
+
+.relationships-modal__errors {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
+.relationships-modal__errors ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.relationships-modal__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}

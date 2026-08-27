@@ -1,0 +1,68 @@
+.add-person-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  width: 520px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.add-person-form h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.add-person-form__relationship {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.add-person-form__relationship legend {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  padding: 0 4px;
+}
+
+.add-person-form__errors {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+}
+
+.add-person-form__errors ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.add-person-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.add-person-form__actions button {
+  font: inherit;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.add-person-form__actions button[type="submit"] {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.add-person-form__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
