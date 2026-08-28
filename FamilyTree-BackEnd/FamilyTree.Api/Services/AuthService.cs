@@ -21,7 +21,7 @@ public class AuthService(FamilyTreeDbContext db, IConfiguration config)
         }
 
         var expiresAt = DateTime.UtcNow.AddHours(24);
-        var token = GenerateToken(user.Username, expiresAt);
+        var token = GenerateToken(user.Username, user.IsAdmin, expiresAt);
         return new LoginResponse(token, expiresAt);
     }
 
@@ -49,15 +49,25 @@ public class AuthService(FamilyTreeDbContext db, IConfiguration config)
         }
 
         var (hash, salt) = PasswordHasher.Hash(request.Password);
-        db.Users.Add(new User { Username = request.Username, PasswordHash = hash, PasswordSalt = salt });
+        db.Users.Add(new User
+        {
+            Username = request.Username,
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            IsAdmin = false, // accounts created via this endpoint are never admins by default
+        });
         await db.SaveChangesAsync(ct);
     }
 
-    private string GenerateToken(string username, DateTime expiresAt)
+    private string GenerateToken(string username, bool isAdmin, DateTime expiresAt)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Secret"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var claims = new[] { new Claim(JwtRegisteredClaimNames.Sub, username) };
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, username),
+            new Claim("IsAdmin", isAdmin ? "true" : "false"),
+        };
 
         var token = new JwtSecurityToken(
             issuer: config["Jwt:Issuer"],

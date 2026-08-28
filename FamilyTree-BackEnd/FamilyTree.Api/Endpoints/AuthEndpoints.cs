@@ -16,15 +16,16 @@ public static class AuthEndpoints
         })
             .WithName("Login");
 
-        // Authenticated-only: bootstraps the very first account by seeding it directly
-        // in the database (see project notes); this endpoint only lets an already
-        // logged-in user create additional accounts.
+        // Admin-only: bootstraps the very first account by seeding it directly
+        // in the database (see project notes); this endpoint only lets an
+        // existing admin create additional accounts, which are never admins
+        // themselves by default.
         group.MapPost("/users", async (CreateUserRequest request, AuthService service, CancellationToken ct) =>
         {
             await service.CreateUserAsync(request, ct);
             return Results.Created();
         })
-            .RequireAuthorization()
+            .RequireAuthorization("AdminOnly")
             .WithName("CreateUser");
     }
 }
