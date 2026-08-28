@@ -83,11 +83,11 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+// The API's own auth (JWT on mutating endpoints) is what actually protects it —
+// hiding the docs endpoint behind IsDevelopment() added no real security, since
+// every route is already visible in the frontend's public JS bundle anyway.
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.UseCors(corsPolicy);
 
