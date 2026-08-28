@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { TransformComponent, TransformWrapper, useControls } from "react-zoom-pan-pinch";
 import type { Person, Relationship } from "../api/types";
 import { computeHiddenPersonIds, computePersonIdsWithChildren } from "./collapse";
 import { computeFamilyTreeLayout } from "./computeLayout";
@@ -12,6 +13,19 @@ interface FamilyTreeViewProps {
 }
 
 const PADDING = 40;
+
+function ResetViewButton() {
+  const { resetTransform } = useControls();
+  return (
+    <button
+      type="button"
+      className="family-tree__reset-view"
+      onClick={() => resetTransform()}
+    >
+      Reset view
+    </button>
+  );
+}
 
 export function FamilyTreeView({ people, relationships, onSelectPerson }: FamilyTreeViewProps) {
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set());
@@ -54,48 +68,65 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
   const height = layout.height + PADDING * 2;
 
   return (
-    <div className="family-tree" style={{ width, height }}>
-      <svg className="family-tree__connectors" width={width} height={height}>
-        <g transform={`translate(${PADDING}, ${PADDING})`}>
-          {layout.parentChildConnectors.map((c) => {
-            const midY = (c.originY + c.targetY) / 2;
-            return (
-              <path
-                key={c.key}
-                d={`M ${c.originX} ${c.originY} L ${c.originX} ${midY} L ${c.targetX} ${midY} L ${c.targetX} ${c.targetY}`}
-                className="family-tree__parent-line"
-              />
-            );
-          })}
-          {layout.spouseConnectors.map((c) => (
-            <line
-              key={c.key}
-              x1={c.x1}
-              y1={c.y}
-              x2={c.x2}
-              y2={c.y}
-              className={
-                c.dashed ? "family-tree__spouse-line family-tree__spouse-line--dashed" : "family-tree__spouse-line"
-              }
-            />
-          ))}
-        </g>
-      </svg>
+    <div className="family-tree-viewport">
+      <TransformWrapper
+        minScale={0.25}
+        maxScale={2}
+        initialScale={1}
+        centerOnInit
+        limitToBounds
+        wheel={{ step: 0.15 }}
+        doubleClick={{ disabled: true }}
+      >
+        <ResetViewButton />
+        <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width, height }}>
+          <div className="family-tree" style={{ width, height }}>
+            <svg className="family-tree__connectors" width={width} height={height}>
+              <g transform={`translate(${PADDING}, ${PADDING})`}>
+                {layout.parentChildConnectors.map((c) => {
+                  const midY = (c.originY + c.targetY) / 2;
+                  return (
+                    <path
+                      key={c.key}
+                      d={`M ${c.originX} ${c.originY} L ${c.originX} ${midY} L ${c.targetX} ${midY} L ${c.targetX} ${c.targetY}`}
+                      className="family-tree__parent-line"
+                    />
+                  );
+                })}
+                {layout.spouseConnectors.map((c) => (
+                  <line
+                    key={c.key}
+                    x1={c.x1}
+                    y1={c.y}
+                    x2={c.x2}
+                    y2={c.y}
+                    className={
+                      c.dashed
+                        ? "family-tree__spouse-line family-tree__spouse-line--dashed"
+                        : "family-tree__spouse-line"
+                    }
+                  />
+                ))}
+              </g>
+            </svg>
 
-      <div className="family-tree__cards" style={{ left: PADDING, top: PADDING }}>
-        {layout.positioned.map((p) => (
-          <PersonCard
-            key={p.person.id}
-            person={p.person}
-            x={p.x}
-            y={p.y}
-            onSelect={onSelectPerson}
-            hasChildren={personIdsWithChildren.has(p.person.id)}
-            isCollapsed={collapsedIds.has(p.person.id)}
-            onToggleCollapse={toggleCollapse}
-          />
-        ))}
-      </div>
+            <div className="family-tree__cards" style={{ left: PADDING, top: PADDING }}>
+              {layout.positioned.map((p) => (
+                <PersonCard
+                  key={p.person.id}
+                  person={p.person}
+                  x={p.x}
+                  y={p.y}
+                  onSelect={onSelectPerson}
+                  hasChildren={personIdsWithChildren.has(p.person.id)}
+                  isCollapsed={collapsedIds.has(p.person.id)}
+                  onToggleCollapse={toggleCollapse}
+                />
+              ))}
+            </div>
+          </div>
+        </TransformComponent>
+      </TransformWrapper>
     </div>
   );
 }

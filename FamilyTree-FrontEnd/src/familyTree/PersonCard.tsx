@@ -1,4 +1,5 @@
 import type { Person } from "../api/types";
+import { useDragAwareClick } from "../components/useDragAwareClick";
 import { CARD_WIDTH, CARD_HEIGHT } from "./computeLayout";
 
 function yearOf(isoDate: string | null): string | null {
@@ -27,6 +28,7 @@ export function PersonCard({
   const birthYear = yearOf(person.birthDate);
   const deathYear = yearOf(person.dateOfDeath);
   const lifespan = birthYear ? `${birthYear} – ${deathYear ?? ""}` : null;
+  const { onMouseDown, wasDrag } = useDragAwareClick();
 
   return (
     <div
@@ -34,7 +36,10 @@ export function PersonCard({
       style={{ left: x, top: y, width: CARD_WIDTH, height: CARD_HEIGHT }}
       role="button"
       tabIndex={0}
-      onClick={() => onSelect(person.id)}
+      onMouseDown={onMouseDown}
+      onClick={(e) => {
+        if (!wasDrag(e)) onSelect(person.id);
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -54,7 +59,7 @@ export function PersonCard({
           aria-expanded={!isCollapsed}
           onClick={(e) => {
             e.stopPropagation();
-            onToggleCollapse(person.id);
+            if (!wasDrag(e)) onToggleCollapse(person.id);
           }}
         >
           {isCollapsed ? "▸" : "▾"}

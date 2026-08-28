@@ -74,13 +74,15 @@ function App() {
         </div>
       )}
 
-      {state.status === "loading" && <p>Loading…</p>}
-      {state.status === "error" && (
-        <p role="alert">Could not load the family tree: {state.message}</p>
-      )}
-      {state.status === "ready" && (
-        <FamilyTreeView people={people} relationships={relationships} onSelectPerson={setSelectedPersonId} />
-      )}
+      <div className="app__body">
+        {state.status === "loading" && <p>Loading…</p>}
+        {state.status === "error" && (
+          <p role="alert">Could not load the family tree: {state.message}</p>
+        )}
+        {state.status === "ready" && (
+          <FamilyTreeView people={people} relationships={relationships} onSelectPerson={setSelectedPersonId} />
+        )}
+      </div>
       {selectedPerson && (
         <PersonDetailModal
           key={selectedPerson.id}
