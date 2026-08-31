@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Data model for the family tree application. Each top-level key is a table/entity. Field 'type' values are logical types (map to .NET / DB types as appropriate).",
+  "description": "Data model for the family tree application, reflecting the actual EF Core models and API DTOs (FamilyTree-BackEnd/FamilyTree.Api/Models and Dtos). Each top-level key is a table/entity. Field 'type' values are logical types (map to .NET / DB types as appropriate). Keep this in sync whenever a model or DTO changes — it's the contract the frontend's src/api/types.ts is written against.",
   "entities": {
     "Person": {
-      "description": "A single family member.",
+      "description": "A single family member. Source: Models/Person.cs, Dtos/PersonDto.cs.",
       "fields": {
         "Id": {
           "type": "int",
           "primaryKey": true,
           "optional": false,
-          "description": "Auto-incrementing primary key."
+          "description": "Auto-incrementing primary key. Present on PersonDto (API responses); omitted from PersonRequest (create/update request body)."
         },
         "FirstName": {
           "type": "string",
@@ -30,12 +30,12 @@
           "type": "enum",
           "enumValues": ["Male", "Female", "Other", "Unknown"],
           "optional": true,
-          "description": "Used for display purposes (icons/pronouns) in the tree UI. Not used to constrain Parent1/Parent2, which are gender-neutral."
+          "description": "Used for display purposes (icons/pronouns) in the tree UI. Not used to constrain Parent1/Parent2, which are gender-neutral. Serialized as a string (JsonStringEnumConverter is registered globally)."
         },
         "BirthDate": {
           "type": "date",
           "optional": true,
-          "description": "Optional because exact birth dates for older ancestors are often unknown."
+          "description": "Optional because exact birth dates for older ancestors are often unknown. .NET type is DateOnly."
         },
         "BirthPlace": {
           "type": "string",
@@ -44,7 +44,7 @@
         "DateOfDeath": {
           "type": "date",
           "optional": true,
-          "description": "Absence does not necessarily mean the person is alive; it may simply be unrecorded."
+          "description": "Absence does not necessarily mean the person is alive; it may simply be unrecorded. .NET type is DateOnly."
         },
         "DeathPlace": {
           "type": "string",
@@ -53,7 +53,7 @@
         "PictureUrl": {
           "type": "string",
           "optional": true,
-          "description": "Single profile picture for v1 (path/URL to stored image)."
+          "description": "Single profile picture for v1 — a pasted URL, not an uploaded file. There is no image upload/storage in this app."
         },
         "Biography": {
           "type": "text",
@@ -72,31 +72,30 @@
           "optional": true,
           "description": "Gender-neutral parent reference."
         },
-        "CreatedByUserId": {
-          "type": "int",
-          "foreignKey": "User.Id",
-          "optional": true,
-          "description": "Which family member/account added this record."
-        },
         "CreatedAt": {
           "type": "datetime",
           "optional": false,
-          "description": "Audit timestamp, set on insert."
+          "description": "Audit timestamp, set on insert. Present on PersonDto; omitted from PersonRequest."
         },
         "UpdatedAt": {
           "type": "datetime",
           "optional": false,
-          "description": "Audit timestamp, set on insert and every update."
+          "description": "Audit timestamp, set on insert and every update. Present on PersonDto; omitted from PersonRequest."
         }
-      }
+      },
+      "notes": [
+        "There is no CreatedByUserId or any other audit-of-who field on this entity — records aren't attributed to the account that created them.",
+        "PersonRequest (used for both POST and PUT bodies) has the same shape as PersonDto minus Id, CreatedAt, and UpdatedAt."
+      ]
     },
     "Relationship": {
-      "description": "Represents a partnership/marriage between two people. Modeled as its own entity (rather than a single Partner field on Person) so a person can have multiple relationships over their lifetime (e.g. divorce and remarriage), each with its own dates and status.",
+      "description": "Represents a partnership/marriage between two people. Modeled as its own entity (rather than a single Partner field on Person) so a person can have multiple relationships over their lifetime (e.g. divorce and remarriage), each with its own dates and status. Source: Models/Relationship.cs, Dtos/RelationshipDto.cs.",
       "fields": {
         "Id": {
           "type": "int",
           "primaryKey": true,
-          "optional": false
+          "optional": false,
+          "description": "Present on RelationshipDto; omitted from RelationshipRequest."
         },
         "Person1Id": {
           "type": "int",
@@ -112,77 +111,72 @@
           "type": "enum",
           "enumValues": ["Married", "Partnered", "Divorced", "Widowed", "Unknown"],
           "optional": false,
-          "description": "Current/final status of this relationship."
+          "description": "Current/final status of this relationship. Serialized as a string."
         },
         "StartDate": {
           "type": "date",
           "optional": true,
-          "description": "e.g. marriage date or start of partnership."
+          "description": "e.g. marriage date or start of partnership. .NET type is DateOnly."
         },
         "EndDate": {
           "type": "date",
           "optional": true,
-          "description": "e.g. divorce date, or date of a partner's death."
-        },
-        "CreatedByUserId": {
-          "type": "int",
-          "foreignKey": "User.Id",
-          "optional": true
+          "description": "e.g. divorce date, or date of a partner's death. .NET type is DateOnly."
         },
         "CreatedAt": {
           "type": "datetime",
-          "optional": false
+          "optional": false,
+          "description": "Present on RelationshipDto; omitted from RelationshipRequest."
         },
         "UpdatedAt": {
           "type": "datetime",
-          "optional": false
+          "optional": false,
+          "description": "Present on RelationshipDto; omitted from RelationshipRequest."
         }
-      }
+      },
+      "notes": [
+        "There is no CreatedByUserId on this entity either.",
+        "RelationshipRequest (used for both POST and PUT bodies) has the same shape as RelationshipDto minus Id, CreatedAt, and UpdatedAt."
+      ]
     },
     "User": {
-      "description": "A family member account with login access, used for attribution and edit permissions. Login mechanism (password vs. OAuth) can be decided later without changing this shape.",
+      "description": "A login account used purely to gate write access to the tree — not a family-tree entity itself, and not exposed by any GET endpoint. Source: Models/User.cs, Dtos/AuthDtos.cs. This shape is simpler than earlier design drafts: no email, display name, role enum, or link to a Person record.",
       "fields": {
-        "Id": {
-          "type": "int",
-          "primaryKey": true,
-          "optional": false
-        },
-        "Email": {
+        "Username": {
           "type": "string",
           "optional": false,
-          "unique": true
-        },
-        "DisplayName": {
-          "type": "string",
-          "optional": false
+          "description": "Login identifier. There is no Id, Email, or DisplayName field — Username is effectively the primary key EF Core uses for lookups (see Data/Configurations/UserConfiguration.cs for the actual key mapping)."
         },
         "PasswordHash": {
           "type": "string",
-          "optional": true,
-          "description": "Optional at the schema level to allow for future OAuth/passwordless login methods that wouldn't populate this field."
-        },
-        "PersonId": {
-          "type": "int",
-          "foreignKey": "Person.Id",
-          "optional": true,
-          "description": "Optional link from a User account to their own Person record in the tree."
-        },
-        "Role": {
-          "type": "enum",
-          "enumValues": ["Admin", "Editor", "Viewer"],
           "optional": false,
-          "description": "Simple permission tier: Admin manages users, Editor can add/edit people & relationships, Viewer is read-only."
+          "description": "PBKDF2 hash — see Common/PasswordHasher.cs."
         },
-        "CreatedAt": {
-          "type": "datetime",
-          "optional": false
+        "PasswordSalt": {
+          "type": "string",
+          "optional": false,
+          "description": "Per-user salt used with PBKDF2."
+        },
+        "IsAdmin": {
+          "type": "bool",
+          "optional": false,
+          "default": false,
+          "description": "Only true for accounts allowed to call POST /api/auth/users (create new accounts). This is a flat boolean, not a Role enum — there is no separate Editor/Viewer tier. Any authenticated user (admin or not) can create/edit/delete People and Relationships; the only thing IsAdmin gates is creating new User accounts."
         }
-      }
+      },
+      "notes": [
+        "Login is by Username + Password (POST /api/auth/login), not email.",
+        "There is no self-service sign-up. New accounts are created by an existing admin via POST /api/auth/users (RequireAuthorization(\"AdminOnly\")), or by inserting a row directly in the database for the very first account.",
+        "New accounts created via the API always have IsAdmin = false; promoting to admin currently requires a direct database update.",
+        "A successful login returns a JWT (LoginResponse: Token, ExpiresAt) carrying an \"IsAdmin\" claim (\"true\"/\"false\") that the AdminOnly authorization policy checks."
+      ]
     }
   },
   "notes": [
     "Children are derived by querying Person rows where Parent1Id or Parent2Id matches a given Person.Id — no separate 'Child' table is needed.",
     "A person's partner(s) are derived by querying Relationship rows where Person1Id or Person2Id matches a given Person.Id.",
-    "Deferred for later iterations: multiple photos per person (Photo gallery entity), adoptive/step/biological distinction on parent links, partial/approximate date precision (e.g. 'circa 1920'), privacy flags for living persons."
+    "All mutating endpoints (POST/PUT/DELETE on /api/people and /api/relationships, and POST /api/auth/users) require a valid JWT via RequireAuthorization(); GET endpoints on people/relationships are public.",
+    "Frontend TypeScript types mirroring these DTOs live in FamilyTree-FrontEnd/src/api/types.ts — update both together.",
+    "Deferred for later iterations: multiple photos per person (Photo gallery entity), adoptive/step/biological distinction on parent links, partial/approximate date precision (e.g. 'circa 1920'), privacy flags for living persons, audit-of-who-created-a-record."
   ]
 }
