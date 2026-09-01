@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { TransformComponent, TransformWrapper, useControls } from "react-zoom-pan-pinch";
 import type { Person, Relationship } from "../api/types";
 import { computeHiddenPersonIds, computePersonIdsWithChildren } from "./collapse";
-import { computeFamilyTreeLayout } from "./computeLayout";
+import { computeFamilyTreeLayout, type ParentChildConnector, type TreeOrientation } from "./computeLayout";
+import { getStoredOrientation, setStoredOrientation } from "./orientationStorage";
 import { PersonCard } from "./PersonCard";
 import "./FamilyTreeView.css";
 
@@ -27,8 +28,18 @@ function ResetViewButton() {
   );
 }
 
+function buildParentLinePath(c: ParentChildConnector, orientation: TreeOrientation): string {
+  if (orientation === "horizontal") {
+    const busX = (c.originX + c.targetX) / 2;
+    return `M ${c.originX} ${c.originY} L ${busX} ${c.originY} L ${busX} ${c.targetY} L ${c.targetX} ${c.targetY}`;
+  }
+  const busY = (c.originY + c.targetY) / 2;
+  return `M ${c.originX} ${c.originY} L ${c.originX} ${busY} L ${c.targetX} ${busY} L ${c.targetX} ${c.targetY}`;
+}
+
 export function FamilyTreeView({ people, relationships, onSelectPerson }: FamilyTreeViewProps) {
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set());
+  const [orientation, setOrientation] = useState<TreeOrientation>(() => getStoredOrientation());
 
   const personIdsWithChildren = useMemo(() => computePersonIdsWithChildren(people), [people]);
 
@@ -44,8 +55,8 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
   );
 
   const layout = useMemo(
-    () => computeFamilyTreeLayout(visiblePeople, visibleRelationships),
-    [visiblePeople, visibleRelationships],
+    () => computeFamilyTreeLayout(visiblePeople, visibleRelationships, orientation),
+    [visiblePeople, visibleRelationships, orientation],
   );
 
   function toggleCollapse(personId: number) {
@@ -60,6 +71,12 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
     });
   }
 
+  function toggleOrientation() {
+    const next: TreeOrientation = orientation === "horizontal" ? "vertical" : "horizontal";
+    setOrientation(next);
+    setStoredOrientation(next);
+  }
+
   if (people.length === 0) {
     return <p>No family members to display yet.</p>;
   }
@@ -70,6 +87,7 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
   return (
     <div className="family-tree-viewport">
       <TransformWrapper
+        key={orientation}
         minScale={0.25}
         maxScale={2}
         initialScale={1}
@@ -79,27 +97,27 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
         doubleClick={{ disabled: true }}
       >
         <ResetViewButton />
+        <button type="button" className="family-tree__orientation-toggle" onClick={toggleOrientation}>
+          {orientation === "horizontal" ? "Vertical layout" : "Horizontal layout"}
+        </button>
         <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width, height }}>
-          <div className="family-tree" style={{ width, height }}>
+          <div className={`family-tree family-tree--${orientation}`} style={{ width, height }}>
             <svg className="family-tree__connectors" width={width} height={height}>
               <g transform={`translate(${PADDING}, ${PADDING})`}>
-                {layout.parentChildConnectors.map((c) => {
-                  const midY = (c.originY + c.targetY) / 2;
-                  return (
-                    <path
-                      key={c.key}
-                      d={`M ${c.originX} ${c.originY} L ${c.originX} ${midY} L ${c.targetX} ${midY} L ${c.targetX} ${c.targetY}`}
-                      className="family-tree__parent-line"
-                    />
-                  );
-                })}
+                {layout.parentChildConnectors.map((c) => (
+                  <path
+                    key={c.key}
+                    d={buildParentLinePath(c, orientation)}
+                    className="family-tree__parent-line"
+                  />
+                ))}
                 {layout.spouseConnectors.map((c) => (
                   <line
                     key={c.key}
                     x1={c.x1}
-                    y1={c.y}
+                    y1={c.y1}
                     x2={c.x2}
-                    y2={c.y}
+                    y2={c.y2}
                     className={
                       c.dashed
                         ? "family-tree__spouse-line family-tree__spouse-line--dashed"
@@ -121,6 +139,7 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
                   hasChildren={personIdsWithChildren.has(p.person.id)}
                   isCollapsed={collapsedIds.has(p.person.id)}
                   onToggleCollapse={toggleCollapse}
+                  orientation={orientation}
                 />
               ))}
             </div>

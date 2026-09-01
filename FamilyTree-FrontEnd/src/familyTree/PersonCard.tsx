@@ -1,6 +1,6 @@
 import type { Person } from "../api/types";
 import { useDragAwareClick } from "../components/useDragAwareClick";
-import { CARD_WIDTH, CARD_HEIGHT } from "./computeLayout";
+import { CARD_WIDTH, CARD_HEIGHT, type TreeOrientation } from "./computeLayout";
 
 function yearOf(isoDate: string | null): string | null {
   return isoDate ? isoDate.slice(0, 4) : null;
@@ -14,6 +14,7 @@ interface PersonCardProps {
   hasChildren: boolean;
   isCollapsed: boolean;
   onToggleCollapse: (personId: number) => void;
+  orientation: TreeOrientation;
 }
 
 export function PersonCard({
@@ -24,6 +25,7 @@ export function PersonCard({
   hasChildren,
   isCollapsed,
   onToggleCollapse,
+  orientation,
 }: PersonCardProps) {
   const birthYear = yearOf(person.birthDate);
   const deathYear = yearOf(person.dateOfDeath);
@@ -62,7 +64,9 @@ export function PersonCard({
             if (!wasDrag(e)) onToggleCollapse(person.id);
           }}
         >
-          {isCollapsed ? "▸" : "▾"}
+          {isCollapsed
+            ? orientation === "horizontal" ? "▸" : "▾"
+            : orientation === "horizontal" ? "◂" : "▴"}
         </button>
       )}
     </div>
