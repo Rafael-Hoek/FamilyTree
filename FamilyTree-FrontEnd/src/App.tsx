@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getPeople, getRelationships } from "./api/client";
 import type { Person, Relationship } from "./api/types";
 import { AddFamilyMemberButton } from "./addPerson/AddFamilyMemberButton";
 import { consumeSessionMessage, isLoggedIn as checkIsLoggedIn } from "./auth/authStorage";
 import { LoginButton } from "./auth/LoginButton";
 import { LogoutButton } from "./auth/LogoutButton";
-import { FamilyTreeView } from "./familyTree/FamilyTreeView";
+import type { TreeOrientation } from "./familyTree/computeLayout";
+import { FamilyTreeView, type FamilyTreeViewHandle } from "./familyTree/FamilyTreeView";
+import { getStoredOrientation, setStoredOrientation } from "./familyTree/orientationStorage";
 import { PersonDetailModal } from "./personDetail/PersonDetailModal";
 import "./App.css";
 
@@ -19,6 +21,14 @@ function App() {
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
   const [loggedIn, setLoggedIn] = useState(() => checkIsLoggedIn());
   const [sessionMessage, setSessionMessageState] = useState<string | null>(() => consumeSessionMessage());
+  const [orientation, setOrientation] = useState<TreeOrientation>(() => getStoredOrientation());
+  const familyTreeRef = useRef<FamilyTreeViewHandle>(null);
+
+  function handleToggleOrientation() {
+    const next: TreeOrientation = orientation === "horizontal" ? "vertical" : "horizontal";
+    setOrientation(next);
+    setStoredOrientation(next);
+  }
 
   const load = useCallback(async () => {
     try {
@@ -63,6 +73,20 @@ function App() {
             }}
           />
         )}
+        {state.status === "ready" && (
+          <>
+            <button type="button" className="auth-button auth-button--secondary" onClick={handleToggleOrientation}>
+              {orientation === "horizontal" ? "Vertical layout" : "Horizontal layout"}
+            </button>
+            <button
+              type="button"
+              className="auth-button auth-button--secondary"
+              onClick={() => familyTreeRef.current?.resetView()}
+            >
+              Reset view
+            </button>
+          </>
+        )}
       </div>
 
       {sessionMessage && (
@@ -80,7 +104,13 @@ function App() {
           <p role="alert">Could not load the family tree: {state.message}</p>
         )}
         {state.status === "ready" && (
-          <FamilyTreeView people={people} relationships={relationships} onSelectPerson={setSelectedPersonId} />
+          <FamilyTreeView
+            ref={familyTreeRef}
+            people={people}
+            relationships={relationships}
+            orientation={orientation}
+            onSelectPerson={setSelectedPersonId}
+          />
         )}
       </div>
       {selectedPerson && (

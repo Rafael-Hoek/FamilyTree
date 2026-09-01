@@ -1,32 +1,23 @@
-import { useMemo, useState } from "react";
-import { TransformComponent, TransformWrapper, useControls } from "react-zoom-pan-pinch";
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { TransformComponent, TransformWrapper, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 import type { Person, Relationship } from "../api/types";
 import { computeHiddenPersonIds, computePersonIdsWithChildren } from "./collapse";
 import { computeFamilyTreeLayout, type ParentChildConnector, type TreeOrientation } from "./computeLayout";
-import { getStoredOrientation, setStoredOrientation } from "./orientationStorage";
 import { PersonCard } from "./PersonCard";
 import "./FamilyTreeView.css";
 
 interface FamilyTreeViewProps {
   people: Person[];
   relationships: Relationship[];
+  orientation: TreeOrientation;
   onSelectPerson: (personId: number) => void;
 }
 
-const PADDING = 40;
-
-function ResetViewButton() {
-  const { resetTransform } = useControls();
-  return (
-    <button
-      type="button"
-      className="family-tree__reset-view"
-      onClick={() => resetTransform()}
-    >
-      Reset view
-    </button>
-  );
+export interface FamilyTreeViewHandle {
+  resetView: () => void;
 }
+
+const PADDING = 40;
 
 function buildParentLinePath(c: ParentChildConnector, orientation: TreeOrientation): string {
   if (orientation === "horizontal") {
@@ -37,9 +28,16 @@ function buildParentLinePath(c: ParentChildConnector, orientation: TreeOrientati
   return `M ${c.originX} ${c.originY} L ${c.originX} ${busY} L ${c.targetX} ${busY} L ${c.targetX} ${c.targetY}`;
 }
 
-export function FamilyTreeView({ people, relationships, onSelectPerson }: FamilyTreeViewProps) {
+export const FamilyTreeView = forwardRef<FamilyTreeViewHandle, FamilyTreeViewProps>(function FamilyTreeView(
+  { people, relationships, orientation, onSelectPerson },
+  ref,
+) {
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set());
-  const [orientation, setOrientation] = useState<TreeOrientation>(() => getStoredOrientation());
+  const transformRef = useRef<ReactZoomPanPinchRef>(null);
+
+  useImperativeHandle(ref, () => ({
+    resetView: () => transformRef.current?.resetTransform(),
+  }), []);
 
   const personIdsWithChildren = useMemo(() => computePersonIdsWithChildren(people), [people]);
 
@@ -71,12 +69,6 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
     });
   }
 
-  function toggleOrientation() {
-    const next: TreeOrientation = orientation === "horizontal" ? "vertical" : "horizontal";
-    setOrientation(next);
-    setStoredOrientation(next);
-  }
-
   if (people.length === 0) {
     return <p>No family members to display yet.</p>;
   }
@@ -88,6 +80,7 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
     <div className="family-tree-viewport">
       <TransformWrapper
         key={orientation}
+        ref={transformRef}
         minScale={0.25}
         maxScale={2}
         initialScale={1}
@@ -96,10 +89,6 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
         wheel={{ step: 0.15 }}
         doubleClick={{ disabled: true }}
       >
-        <ResetViewButton />
-        <button type="button" className="family-tree__orientation-toggle" onClick={toggleOrientation}>
-          {orientation === "horizontal" ? "Vertical layout" : "Horizontal layout"}
-        </button>
         <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width, height }}>
           <div className={`family-tree family-tree--${orientation}`} style={{ width, height }}>
             <svg className="family-tree__connectors" width={width} height={height}>
@@ -148,4 +137,4 @@ export function FamilyTreeView({ people, relationships, onSelectPerson }: Family
       </TransformWrapper>
     </div>
   );
-}
+});
