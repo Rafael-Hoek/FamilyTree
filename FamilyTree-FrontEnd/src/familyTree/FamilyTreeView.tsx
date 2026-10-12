@@ -86,7 +86,7 @@ export const FamilyTreeView = forwardRef<FamilyTreeViewHandle, FamilyTreeViewPro
         initialScale={1}
         centerOnInit
         limitToBounds
-        wheel={{ step: 0.15 }}
+        wheel={{ step: 0.03 }}
         doubleClick={{ disabled: true }}
       >
         <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width, height }}>
